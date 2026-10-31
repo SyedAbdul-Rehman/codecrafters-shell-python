@@ -1,6 +1,6 @@
 import sys
 import os
-
+import subprocess
 
 def executables(cmd):
     path = os.environ.get("PATH")
@@ -21,22 +21,29 @@ def main():
         sys.stdout.flush()
         try:
             command = input()
+            parts = command.strip().split()
         except EOFError:
             break
-        if command == "exit":
+        if not parts:
+            continue
+        cmd = parts[0]
+        args = parts[1:]
+        if cmd == "exit":
             break
-        if command.startswith("echo "):
+        if cmd == "echo":
             print(f"{command[5:]}")
-        elif command.startswith("type "):
-            cmd = command[5:]
-            if cmd in built_in:
-                print(f"{cmd} is a shell builtin")
-            elif result := executables(cmd):
-                print(f'{cmd} is {result}')
+        elif cmd == "type" and args:
+            if args[0] in built_in:
+                print(f"{args[0]} is a shell builtin")
+            elif result := executables(args[0]):
+                print(f'{args[0]} is {result}')
             else:
-                print(f"{cmd}: not found")
+                print(f"{args[0]}: not found")
         else:
-            print(f"{command}: not found")
+            if result := executables(cmd):
+                subprocess.run(parts, executable=result)
+            else:
+                print(f'{cmd}: not found')
 
 
 if __name__ == "__main__":
